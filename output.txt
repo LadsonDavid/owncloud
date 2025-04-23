@@ -1,0 +1,27 @@
+INFO:     Will watch for changes in these directories: ['C:\\Lab\\local server']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [8576] using StatReload
+DEBUG:asyncio:Using selector: SelectSelector
+INFO:     Started server process [23544]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'main_test.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [23544]
+Connected to MongoDB: localserver
+DEBUG:asyncio:Using selector: SelectSelector
+INFO:     Started server process [26528]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'app\routers\files.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [26528]
+Connected to MongoDB: localserver
+DEBUG:asyncio:Using selector: SelectSelector
+INFO:     Started server process [25068]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
