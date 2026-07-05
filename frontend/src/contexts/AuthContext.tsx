@@ -24,6 +24,7 @@ interface AuthProviderProps {
 interface JwtPayload {
   sub: string;
   id: string;
+  email: string;
   exp: number;
 }
 
@@ -53,7 +54,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setUser({
             id: decoded.id,
             username: decoded.sub,
-            email: '', // We don't have this in the token
+            email: decoded.email || '',
             is_active: true,
             created_at: new Date().toISOString()
           });

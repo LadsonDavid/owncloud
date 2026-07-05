@@ -14,6 +14,11 @@ import {
   CircularProgress,
   Alert,
   Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
   useMediaQuery,
   useTheme,
   Card,
@@ -32,10 +37,10 @@ import {
   VideoFile as VideoIcon,
 } from '@mui/icons-material';
 import { filesAPI } from '../../services/api';
-import { File } from '../../types';
+import { CloudFile } from '../../types';
 
 interface FileListProps {
-  files: File[];
+  files: CloudFile[];
   onFileDeleted: () => void;
   loading: boolean;
 }
@@ -43,6 +48,8 @@ interface FileListProps {
 const FileList: React.FC<FileListProps> = ({ files, onFileDeleted, loading }) => {
   const [error, setError] = useState<string | null>(null);
   const [actionInProgress, setActionInProgress] = useState<{ [key: string]: boolean }>({});
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [fileToDelete, setFileToDelete] = useState<CloudFile | null>(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -67,13 +74,10 @@ const FileList: React.FC<FileListProps> = ({ files, onFileDeleted, loading }) =>
     return <FileIcon />;
   };
 
-  const handleDownload = async (file: File) => {
+  const handleDownload = async (file: CloudFile) => {
     try {
-      setActionInProgress({ ...actionInProgress, [file.id]: true });
-      
+      setActionInProgress((prev) => ({ ...prev, [file.id]: true }));
       const blob = await filesAPI.downloadFile(file.id);
-      
-      // Create a download link and click it
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -85,28 +89,33 @@ const FileList: React.FC<FileListProps> = ({ files, onFileDeleted, loading }) =>
     } catch (err: any) {
       setError(`Failed to download ${file.filename}: ${err.response?.data?.detail || err.message}`);
     } finally {
-      setActionInProgress({ ...actionInProgress, [file.id]: false });
+      setActionInProgress((prev) => ({ ...prev, [file.id]: false }));
     }
   };
 
-  const handleDelete = async (file: File) => {
-    if (!window.confirm(`Are you sure you want to delete ${file.filename}?`)) {
-      return;
-    }
-    
+  const handleDeleteClick = (file: CloudFile) => {
+    setFileToDelete(file);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!fileToDelete) return;
+    const file = fileToDelete;
+    setDeleteDialogOpen(false);
+    setFileToDelete(null);
+
     try {
-      setActionInProgress({ ...actionInProgress, [file.id]: true });
+      setActionInProgress((prev) => ({ ...prev, [file.id]: true }));
       await filesAPI.deleteFile(file.id);
       onFileDeleted();
     } catch (err: any) {
       setError(`Failed to delete ${file.filename}: ${err.response?.data?.detail || err.message}`);
     } finally {
-      setActionInProgress({ ...actionInProgress, [file.id]: false });
+      setActionInProgress((prev) => ({ ...prev, [file.id]: false }));
     }
   };
 
-  // Function to get shareable link (just a mock for now)
-  const getShareableLink = (file: File) => {
+  const getShareableLink = (file: CloudFile) => {
     alert(`Share link (mock): ${window.location.origin}/share/${file.id}`);
   };
 
@@ -121,9 +130,7 @@ const FileList: React.FC<FileListProps> = ({ files, onFileDeleted, loading }) =>
   if (files.length === 0) {
     return (
       <Paper elevation={2} sx={{ p: 3, textAlign: 'center' }}>
-        <Typography variant="h6" color="text.secondary">
-          No files uploaded yet
-        </Typography>
+        <Typography variant="h6" color="text.secondary">No files uploaded yet</Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
           Upload a file to see it here
         </Typography>
@@ -140,16 +147,13 @@ const FileList: React.FC<FileListProps> = ({ files, onFileDeleted, loading }) =>
       )}
 
       {isMobile ? (
-        // Mobile view: Cards
         <Stack spacing={2}>
           {files.map((file) => (
             <Card key={file.id}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                   {getFileIcon(file.content_type)}
-                  <Typography variant="h6" sx={{ ml: 1 }}>
-                    {file.filename}
-                  </Typography>
+                  <Typography variant="h6" sx={{ ml: 1 }}>{file.filename}</Typography>
                 </Box>
                 <Typography variant="body2" color="text.secondary">
                   Size: {formatFileSize(file.size)}
@@ -160,33 +164,23 @@ const FileList: React.FC<FileListProps> = ({ files, onFileDeleted, loading }) =>
               </CardContent>
               <CardActions>
                 <Tooltip title="Download">
-                  <IconButton 
-                    onClick={() => handleDownload(file)}
-                    disabled={actionInProgress[file.id]}
-                  >
+                  <IconButton onClick={() => handleDownload(file)} disabled={actionInProgress[file.id]}>
                     {actionInProgress[file.id] ? <CircularProgress size={24} /> : <DownloadIcon />}
                   </IconButton>
                 </Tooltip>
                 <Tooltip title="Delete">
-                  <IconButton 
-                    onClick={() => handleDelete(file)}
-                    disabled={actionInProgress[file.id]}
-                    color="error"
-                  >
+                  <IconButton onClick={() => handleDeleteClick(file)} disabled={actionInProgress[file.id]} color="error">
                     <DeleteIcon />
                   </IconButton>
                 </Tooltip>
                 <Tooltip title="Share Link">
-                  <IconButton onClick={() => getShareableLink(file)}>
-                    <LinkIcon />
-                  </IconButton>
+                  <IconButton onClick={() => getShareableLink(file)}><LinkIcon /></IconButton>
                 </Tooltip>
               </CardActions>
             </Card>
           ))}
         </Stack>
       ) : (
-        // Desktop view: Table
         <TableContainer component={Paper} elevation={2}>
           <Table aria-label="files table">
             <TableHead>
@@ -208,36 +202,23 @@ const FileList: React.FC<FileListProps> = ({ files, onFileDeleted, loading }) =>
                     </Box>
                   </TableCell>
                   <TableCell>
-                    <Chip 
-                      label={file.content_type} 
-                      size="small" 
-                      variant="outlined" 
-                    />
+                    <Chip label={file.content_type} size="small" variant="outlined" />
                   </TableCell>
                   <TableCell>{formatFileSize(file.size)}</TableCell>
                   <TableCell>{formatDate(file.created_at)}</TableCell>
                   <TableCell align="right">
                     <Tooltip title="Download">
-                      <IconButton 
-                        onClick={() => handleDownload(file)}
-                        disabled={actionInProgress[file.id]}
-                      >
+                      <IconButton onClick={() => handleDownload(file)} disabled={actionInProgress[file.id]}>
                         {actionInProgress[file.id] ? <CircularProgress size={24} /> : <DownloadIcon />}
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Delete">
-                      <IconButton 
-                        onClick={() => handleDelete(file)}
-                        disabled={actionInProgress[file.id]}
-                        color="error"
-                      >
+                      <IconButton onClick={() => handleDeleteClick(file)} disabled={actionInProgress[file.id]} color="error">
                         <DeleteIcon />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Share Link">
-                      <IconButton onClick={() => getShareableLink(file)}>
-                        <LinkIcon />
-                      </IconButton>
+                      <IconButton onClick={() => getShareableLink(file)}><LinkIcon /></IconButton>
                     </Tooltip>
                   </TableCell>
                 </TableRow>
@@ -246,8 +227,22 @@ const FileList: React.FC<FileListProps> = ({ files, onFileDeleted, loading }) =>
           </Table>
         </TableContainer>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Delete File</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete <strong>{fileToDelete?.filename}</strong>? This cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleDeleteConfirm} color="error" variant="contained">Delete</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
 
-export default FileList; 
+export default FileList;

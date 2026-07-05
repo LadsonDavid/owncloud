@@ -15,7 +15,7 @@ export interface RegisterCredentials {
   username: string;
   email: string;
   password: string;
-  confirmPassword?: string; // This is for frontend validation only
+  confirmPassword?: string;
 }
 
 export interface AuthResponse {
@@ -23,7 +23,7 @@ export interface AuthResponse {
   token_type: string;
 }
 
-export interface File {
+export interface CloudFile {
   id: string;
   filename: string;
   content_type: string;
@@ -54,4 +54,4 @@ export interface AuthContextType {
 export interface ThemeContextType {
   darkMode: boolean;
   toggleDarkMode: () => void;
-} 
+}
