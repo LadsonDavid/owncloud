@@ -1,178 +1,178 @@
-# Cloud Storage System
+# OwnCloud — Self-Hosted Cloud Storage
 
-A full-stack cloud storage application with FastAPI backend and React frontend. This system provides user authentication, file and folder management with an intuitive UI.
+A full-stack cloud storage application with a FastAPI backend and React frontend. Supports user authentication, file and folder management, drag-and-drop uploads, and both grid and list views.
 
 ## Features
 
-- User registration and authentication with JWT tokens
+- JWT-based user registration and authentication
 - Secure password hashing with bcrypt
-- File upload, download, listing, and deletion
-- Folder creation and navigation
-- Drag-and-drop file uploads
-- Grid and list view options
-- File metadata storage in MongoDB
-- Physical file storage on server
+- File upload with MIME type validation (images, documents, audio, video, archives)
+- File download, deletion, and shareable link generation
+- Folder creation and nested navigation
+- Drag-and-drop file uploads via React Dropzone
+- Grid view and list view toggle
+- File preview for images, video, audio, and PDF
+- Responsive layout — mobile and desktop
+- MongoDB with async Motor driver and automatic index creation
 
 ## Tech Stack
 
-### Backend
-- Python 3.8+ with FastAPI
-- MongoDB for database storage
-- JWT for authentication
-- Pydantic for data validation
-- Motor for async MongoDB interactions
-
-### Frontend
-- React with functional components
-- Material-UI for responsive design
-- Axios for API requests
-- React Context API for state management
-- React Dropzone for drag-and-drop uploads
+| Layer | Technology |
+|---|---|
+| Backend | Python 3.8+, FastAPI, Motor (async MongoDB), Pydantic v2 |
+| Auth | JWT (python-jose), bcrypt |
+| Database | MongoDB |
+| Frontend | React 18, TypeScript, Material UI v5 |
+| HTTP Client | Axios |
+| File Input | React Dropzone |
+| State | React Context API |
 
 ## Prerequisites
 
 - Python 3.8+
-- Node.js 14+
-- MongoDB running locally on port 27017 (default)
+- Node.js 16+
+- MongoDB running locally on port 27017
 
 ## Installation
 
-1. Clone the repository:
+### 1. Clone the repository
 
 ```bash
-git clone <repository-url>
-cd <repository-dir>
+git clone https://github.com/LadsonDavid/owncloud.git
+cd owncloud
 ```
 
-### Backend Setup
-
-1. Create a virtual environment (optional but recommended):
+### 2. Backend setup
 
 ```bash
+# Create and activate a virtual environment (recommended)
 python -m venv venv
-# On Windows
+
+# Windows
 venv\Scripts\activate
-# On macOS/Linux
+# macOS / Linux
 source venv/bin/activate
-```
 
-2. Install backend dependencies:
-
-```bash
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-3. Configure environment variables (copy .env.example to .env and edit if needed):
+Create a `.env` file in the project root:
 
-```
+```env
 MONGODB_URL=mongodb://localhost:27017
 DATABASE_NAME=localserver
-SECRET_KEY=your_super_secret_key_change_this_in_production
+SECRET_KEY=change_this_to_a_long_random_string
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 ENVIRONMENT=development
 ```
 
-### Frontend Setup
-
-1. Navigate to the frontend directory:
+### 3. Frontend setup
 
 ```bash
 cd frontend
-```
-
-2. Install frontend dependencies:
-
-```bash
 npm install
 ```
 
-3. Create a .env file in the frontend directory with:
+Create a `.env` file inside the `frontend/` directory:
 
-```
+```env
 REACT_APP_API_URL=http://localhost:8000
 ```
 
 ## Running the Application
 
-### Start the Backend
-
-1. Make sure MongoDB is running:
+### Start MongoDB
 
 ```bash
-# Start MongoDB (command may vary based on your installation)
 mongod --port 27017
 ```
 
-2. From the project root, start the FastAPI server:
+### Start the backend
 
 ```bash
+# From the project root
 python main.py
 ```
 
-The server will start at http://localhost:8000. You can access the API documentation at http://localhost:8000/docs.
+API server starts at `http://localhost:8000`.
+Interactive docs available at `http://localhost:8000/docs`.
 
-### Start the Frontend
-
-1. In a separate terminal, navigate to the frontend directory:
+### Start the frontend
 
 ```bash
 cd frontend
-```
-
-2. Start the React development server:
-
-```bash
 npm start
 ```
 
-The frontend will be available at http://localhost:3000.
+Frontend available at `http://localhost:3000`.
 
 ## Project Structure
 
 ```
-.
+owncloud/
 ├── app/
 │   ├── database/
-│   │   └── connection.py  # MongoDB connection
+│   │   └── connection.py      # MongoDB connection + index creation
 │   ├── models/
-│   │   ├── user.py        # User Pydantic models
-│   │   ├── file.py        # File Pydantic models
-│   │   └── folder.py      # Folder Pydantic models
+│   │   ├── user.py            # User Pydantic models
+│   │   ├── file.py            # File Pydantic models
+│   │   └── folder.py          # Folder Pydantic models
 │   ├── routers/
-│   │   ├── auth.py        # Authentication routes
-│   │   └── files.py       # File management routes
-│   └── utils.py           # Utility functions
+│   │   ├── auth.py            # Register / login endpoints
+│   │   └── files.py           # File and folder CRUD endpoints
+│   └── utils.py               # JWT helpers
 ├── frontend/
-│   ├── public/            # Static assets
-│   ├── src/
-│   │   ├── components/    # React components
-│   │   ├── contexts/      # Context providers
-│   │   ├── pages/         # Page components
-│   │   ├── services/      # API services
-│   │   └── types/         # TypeScript type definitions
-│   ├── package.json       # Frontend dependencies
-│   └── tsconfig.json      # TypeScript configuration
-├── uploads/               # Directory to store uploaded files
-├── .env                   # Environment variables
-├── .env.example           # Example environment variables
-├── main.py                # Main application entry point
-├── requirements.txt       # Python dependencies
-└── README.md              # Project documentation
+│   └── src/
+│       ├── components/
+│       │   └── files/
+│       │       ├── FileGrid.tsx    # Grid view with preview dialogs
+│       │       ├── FileList.tsx    # Table/list view
+│       │       └── FileUpload.tsx  # Drag-and-drop uploader
+│       ├── contexts/
+│       │   └── AuthContext.tsx     # Auth state and JWT parsing
+│       ├── pages/
+│       │   ├── AuthPage.tsx        # Login / register page
+│       │   └── DashboardPage.tsx   # Main file manager page
+│       ├── services/
+│       │   └── api.ts             # Axios instance and API calls
+│       └── types/
+│           └── index.ts           # TypeScript interfaces
+├── uploads/                       # Server-side file storage
+├── main.py                        # FastAPI app entry point
+├── requirements.txt
+└── .env
 ```
 
-## Security Considerations
+## Environment Variables
 
-- Change the SECRET_KEY in the .env file for production
-- Consider implementing file size limits for uploads
-- Add additional validation for uploaded files
-- Consider using HTTPS in production
-- Implement rate limiting to prevent abuse
+### Backend (`.env` in project root)
 
-## Contributing
+| Variable | Default | Description |
+|---|---|---|
+| `MONGODB_URL` | `mongodb://localhost:27017` | MongoDB connection string |
+| `DATABASE_NAME` | `localserver` | Database name |
+| `SECRET_KEY` | — | JWT signing secret (required) |
+| `ALGORITHM` | `HS256` | JWT algorithm |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | `30` | Token lifetime |
+| `ENVIRONMENT` | `development` | Set to `production` to exit on DB failure |
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request 
+### Frontend (`frontend/.env`)
+
+| Variable | Default | Description |
+|---|---|---|
+| `REACT_APP_API_URL` | `http://127.0.0.1:8000` | Backend base URL |
+
+## Security
+
+- MIME type allowlist enforced on upload — executables and unknown types are rejected
+- Passwords hashed with bcrypt before storage
+- All endpoints (except login/register) require a valid JWT
+- Error responses never expose internal details (stack traces, DB errors)
+- CORS handled by FastAPI middleware; no manual header injection
+- Change `SECRET_KEY` to a long random string before deploying
+
+## License
+
+MIT
